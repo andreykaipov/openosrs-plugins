@@ -1,11 +1,16 @@
 rootProject.name = "Andrey's OpenOSRS Plugins"
 
-File("plugins").list().forEach {
+file("plugins").list().forEach {
     println("Found plugin $it")
     include(":$it")
+}
 
-    project(":$it").apply {
-        projectDir = File("plugins/$it")
-        buildFileName = "build.gradle.kts"
+rootProject.children.forEach {
+    it.apply {
+        projectDir = file("plugins/$name")
+        buildFileName = "$name.gradle.kts"
+
+        require(projectDir.isDirectory) { "Project '${path} must have a $projectDir directory" }
+        require(buildFile.isFile) { "Project '${path} must have a $buildFile build script" }
     }
 }
