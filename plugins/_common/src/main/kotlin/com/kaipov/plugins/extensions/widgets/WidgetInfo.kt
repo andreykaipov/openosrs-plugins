@@ -1,13 +1,8 @@
-package com.kaipov.plugins.extensions.client
+package com.kaipov.plugins.extensions.widgets
 
 import net.runelite.api.Client
 import net.runelite.api.widgets.Widget
 import net.runelite.api.widgets.WidgetID
-
-interface WidgetInfo {
-    val groupId: Int
-    val childId: Int
-}
 
 /**
  * The following allows us to define our own WidgetInfo enums and use the
@@ -18,10 +13,11 @@ fun Client.getWidget(wi: WidgetInfo): Widget? {
     return getWidget(wi.groupId, wi.childId)
 }
 
-enum class ExtraWidgets(override val groupId: Int, override val childId: Int) : WidgetInfo {
+enum class WidgetInfo(val groupId: Int, val childId: Int) {
 
     MINIMAP_HEALTH_ORB_TEXT(WidgetID.MINIMAP_GROUP_ID, 5),
 
+    BANK_CONTAINER_BUTTONS(WidgetID.BANK_GROUP_ID, 2),
     BANK_QUANTITY_ONE(WidgetID.BANK_GROUP_ID, 27),
     BANK_QUANTITY_FIVE(WidgetID.BANK_GROUP_ID, 29),
     BANK_QUANTITY_TEN(WidgetID.BANK_GROUP_ID, 31),

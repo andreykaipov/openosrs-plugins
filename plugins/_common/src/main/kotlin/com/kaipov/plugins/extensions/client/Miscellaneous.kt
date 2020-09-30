@@ -35,12 +35,12 @@ fun Client.getInventory(): List<Item> {
 
 // Returns the index of the first item matching the given item ID in our
 // inventory, or -1 if there's no such item.
-fun Client.findFirstInInventory(itemID: Int): Int {
-    return getInventory().indexOfFirst { it.id == itemID }
+fun Client.findFirstInInventory(itemID: Int, quantity: Int = 1): Int {
+    return getInventory().indexOfFirst { it.id == itemID && it.quantity >= quantity }
 }
 
-fun Client.hasInInventory(itemID: Int): Boolean {
-    return findFirstInInventory(itemID) != -1
+fun Client.hasInInventory(itemID: Int, quantity: Int = 1): Boolean {
+    return findFirstInInventory(itemID, quantity) != -1
 }
 
 fun Client.hasBankOpen(): Boolean {

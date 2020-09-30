@@ -17,6 +17,7 @@ import java.util.function.Supplier
 import javax.inject.Inject
 import kotlin.reflect.KClass
 import net.runelite.api.*
+import net.runelite.api.AnimationID.IDLE
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.events.GameTick
 import net.runelite.api.events.MenuOptionClicked
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory
 open class BotPlugin<C : BotConfig, O : OverlayPanel>(
     private val pluginClass: KClass<out BotPlugin<C, O>>,
     private val configClass: KClass<C>,
+    private val everyOtherTick: Int = 3,
 ) : Plugin() {
     val log = LoggerFactory.getLogger(pluginClass.java)!!
 
@@ -79,7 +81,6 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
     private val lifecycleMenuOptionClicked = Any()
     private val lifecycleGameTick = Any()
 
-    open val everyOtherTick = 3
     var previousPlayerLocation = LocalPoint(0, 0)
 
     fun Player?.canAct(): Boolean {
@@ -88,9 +89,14 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
             localLocation == previousPlayerLocation // player is not moving ((but not necessarily idle)
     }
 
-    open fun act(player: Player): Unit? {
-        return null
+    fun Player.isIdle() = animation == IDLE
+
+    // but not necessarily idle (walking/running is still an IDLE animation)
+    fun Player.isMoving(): Boolean {
+        return localLocation != previousPlayerLocation // player is not moving ((but not necessarily idle)
     }
+
+    open fun act(player: Player) {}
 
     private fun startSubscribers() {
         events.subscribe<MenuOptionClicked>(lifecycleMenuOptionClicked) {
@@ -100,8 +106,13 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         }
 
         events.subscribe<GameTick>(lifecycleGameTick) {
+            if ((1..everyOtherTick).random() != 1) return@subscribe
+
             val player = client.localPlayer
-            if (player.canAct()) act(player!!)
+            if (player != null) {
+                act(player)
+            }
+
             previousPlayerLocation = player?.localLocation ?: LocalPoint(0, 0)
         }
     }
@@ -272,6 +283,18 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
                 .build()
         )
     }
+
+    fun waitUntil(max: Long = 4000L, predicate: () -> Boolean) {
+        var timeSlept: Long = 0
+        while (!predicate()) {
+            val t = (500..1000L).random()
+            Thread.sleep(t)
+            timeSlept += t
+
+            if (timeSlept > max) break
+        }
+    }
+
 
 /*
 else if (isInPestControl) {

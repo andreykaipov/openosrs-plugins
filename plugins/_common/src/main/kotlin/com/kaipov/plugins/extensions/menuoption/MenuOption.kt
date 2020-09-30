@@ -1,12 +1,11 @@
 package com.kaipov.plugins.extensions.menuoption
 
-import com.kaipov.plugins.extensions.client.ExtraWidgets
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity.*
 import net.runelite.api.*
+import net.runelite.api.MenuOpcode.*
 import net.runelite.api.events.MenuOptionClicked
 import net.runelite.api.widgets.WidgetInfo
-import net.runelite.api.widgets.WidgetInfo.EQUIPMENT_AMULET
-import net.runelite.api.widgets.WidgetInfo.EQUIPMENT_RING
+import com.kaipov.plugins.extensions.widgets.WidgetInfo as MyWidgetInfo
 
 /**
  * Overwrites a clicked menu option's menu entry to the given one. The option
@@ -51,26 +50,26 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
      */
     companion object {
         // Assumed we're wearing these jewellery items
-        val GAMES_NECKLACE_TO_WINTERTODT = MenuOption(6, MenuOpcode.CC_OP_LOW_PRIORITY, -1, EQUIPMENT_AMULET.id)
-        val RING_OF_DUELING_TO_FEROX_ENCLAVE = MenuOption(4, MenuOpcode.CC_OP, -1, EQUIPMENT_RING.id)
-        val BANK_DEPOSIT_INVENTORY = MenuOption(id = 1, MenuOpcode.CC_OP, -1, WidgetInfo.BANK_DEPOSIT_INVENTORY.id)
-        val OURANIA_TELPORT = MenuOption(id = 1, MenuOpcode.CC_OP, -1, WidgetInfo.SPELL_OURANIA_TELEPORT.id)
-        val NPC_CONTACT = MenuOption(id = 1, MenuOpcode.CC_OP, -1, WidgetInfo.SPELL_NPC_CONTACT.id)
-        val NPC_CONTACT_DARK_MARGE = MenuOption(id = 1, MenuOpcode.CC_OP, -1, ExtraWidgets.NPC_CONTACT_DARK_MAGE.id)
-        val DIALOG_NPC_CONTINUE = MenuOption(id = 0, MenuOpcode.WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_NPC_CONTINUE.id)
-        val DIALOG_PLAYER_CONTINUE = MenuOption(id = 0, MenuOpcode.WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_PLAYER_CONTINUE.id)
+        val GAMES_NECKLACE_TO_WINTERTODT     = MenuOption(6, CC_OP_LOW_PRIORITY, -1, WidgetInfo.EQUIPMENT_AMULET.id)
+        val RING_OF_DUELING_TO_FEROX_ENCLAVE = MenuOption(4, CC_OP, -1, WidgetInfo.EQUIPMENT_RING.id)
 
-//        val BANK_CLOSE = MenuOption(id = 1, MenuOpcode.WIDGET_TYPE_6, 11, WidgetInfo.DIALOG_PLAYER_CONTINUE.id)
+        val BANK_DEPOSIT_INVENTORY  = MenuOption(1, CC_OP, -1, WidgetInfo.BANK_DEPOSIT_INVENTORY.id)
+        val SPELL_OURANIA_TELELPORT = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_OURANIA_TELEPORT.id)
+        val SPELL_NPC_CONTACT       = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_NPC_CONTACT.id)
+        val NPC_CONTACT_DARK_MAGE   = MenuOption(1, CC_OP, -1, MyWidgetInfo.NPC_CONTACT_DARK_MAGE.id)
+        val DIALOG_NPC_CONTINUE     = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_NPC_CONTINUE.id)
+        val DIALOG_PLAYER_CONTINUE  = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_PLAYER_CONTINUE.id)
+        val BANK_CLOSE              = MenuOption(0, WIDGET_TYPE_6, 11, MyWidgetInfo.BANK_CONTAINER_BUTTONS.id)
 
         /**
          * Inventory menu options need both the itemID and index (0-27) corresponding to the location of the item in
          * the inventory. The menu option's ID is the item ID.
          * @see ItemID
          */
-        fun INVENTORY_FIRST_OPTION(index: Int, id: Int) = MenuOption(id, MenuOpcode.ITEM_FIRST_OPTION, index, WidgetInfo.INVENTORY.id)
-        fun INVENTORY_SECOND_OPTION(index: Int, id: Int) = MenuOption(id, MenuOpcode.ITEM_SECOND_OPTION, index, WidgetInfo.INVENTORY.id)
-        fun USE(index: Int, id: Int) = MenuOption(id, MenuOpcode.ITEM_USE, index, WidgetInfo.INVENTORY.id)
-        fun DROP(index: Int, id: Int) = MenuOption(id, MenuOpcode.ITEM_DROP, index, WidgetInfo.INVENTORY.id)
+        fun INVENTORY_FIRST_OPTION(index: Int, id: Int)  = MenuOption(id, ITEM_FIRST_OPTION, index, WidgetInfo.INVENTORY.id)
+        fun INVENTORY_SECOND_OPTION(index: Int, id: Int) = MenuOption(id, ITEM_SECOND_OPTION, index, WidgetInfo.INVENTORY.id)
+        fun USE(index: Int, id: Int)                     = MenuOption(id, ITEM_USE, index, WidgetInfo.INVENTORY.id)
+        fun DROP(index: Int, id: Int)                    = MenuOption(id, ITEM_DROP, index, WidgetInfo.INVENTORY.id)
 
         /**
          * Banking inventory menu options use a different ID and opcode for the different quantities to withdraw or
@@ -85,36 +84,36 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         // of 3 will withdraw one, so before calling this method, make sure we've selected "1".
         fun DEPOSIT(index: Int, quantity: Quantity): MenuOption {
             val p = when (quantity) {
-                ONE -> Pair(2, MenuOpcode.CC_OP)
-                FIVE -> Pair(4, MenuOpcode.CC_OP)
-                TEN -> Pair(5, MenuOpcode.CC_OP)
-                ALL -> Pair(8, MenuOpcode.CC_OP_LOW_PRIORITY)
+                ONE  -> Pair(2, CC_OP)
+                FIVE -> Pair(4, CC_OP)
+                TEN  -> Pair(5, CC_OP)
+                ALL  -> Pair(8, CC_OP_LOW_PRIORITY)
             }
             return MenuOption(id = p.first, opcode = p.second, index, WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER.id)
         }
 
         fun WITHDRAW(index: Int, quantity: Quantity): MenuOption {
             val p = when (quantity) {
-                ONE -> Pair(1, MenuOpcode.CC_OP)
-                FIVE -> Pair(3, MenuOpcode.CC_OP)
-                TEN -> Pair(4, MenuOpcode.CC_OP)
-                ALL -> Pair(7, MenuOpcode.CC_OP_LOW_PRIORITY)
+                ONE  -> Pair(1, CC_OP)
+                FIVE -> Pair(3, CC_OP)
+                TEN  -> Pair(4, CC_OP)
+                ALL  -> Pair(7, CC_OP_LOW_PRIORITY)
             }
             return MenuOption(id = p.first, opcode = p.second, index, WidgetInfo.BANK_ITEM_CONTAINER.id)
         }
 
         // You can wear armor or fill/empty rune pouches from the deposit inventory when the bank is open.
         // These use the ninth option.
-        fun BANK_DEPOSIT_NINTH_OPTION(index: Int) = MenuOption(id = 9, MenuOpcode.CC_OP_LOW_PRIORITY, index, WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER.id)
+        fun BANK_DEPOSIT_NINTH_OPTION(index: Int) = MenuOption(id = 9, CC_OP_LOW_PRIORITY, index, WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER.id)
 
         // Toggling the bank quantity selection for withdrawals/deposits.
         // Note that changing these potentially changes the behavior of the above functions.
-        val BANK_QUANTITY_ONE = MenuOption(id = 1, MenuOpcode.CC_OP, -1, ExtraWidgets.BANK_QUANTITY_ONE.id)
-        val BANK_QUANTITY_FIVE = MenuOption(id = 1, MenuOpcode.CC_OP, -1, ExtraWidgets.BANK_QUANTITY_FIVE.id)
-        val BANK_QUANTITY_TEN = MenuOption(id = 1, MenuOpcode.CC_OP, -1, ExtraWidgets.BANK_QUANTITY_TEN.id)
-        val BANK_QUANTITY_X = MenuOption(id = 1, MenuOpcode.CC_OP, -1, ExtraWidgets.BANK_QUANTITY_X.id) // only selects
-        val BANK_QUANTITY_X_SET = MenuOption(id = 2, MenuOpcode.CC_OP, -1, ExtraWidgets.BANK_QUANTITY_X.id) // prompt for custom amount
-        val BANK_QUANTITY_ALL = MenuOption(id = 1, MenuOpcode.CC_OP, -1, ExtraWidgets.BANK_QUANTITY_ALL.id)
+        val BANK_QUANTITY_ONE = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_ONE.id)
+        val BANK_QUANTITY_FIVE = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_FIVE.id)
+        val BANK_QUANTITY_TEN = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_TEN.id)
+        val BANK_QUANTITY_X = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_X.id) // only selects
+        val BANK_QUANTITY_X_SET = MenuOption(id = 2, CC_OP, -1, WidgetInfo.BANK_QUANTITY_X.id) // prompt for custom amount
+        val BANK_QUANTITY_ALL = MenuOption(id = 1, CC_OP, -1, WidgetInfo.BANK_QUANTITY_ALL.id)
 
         /**
          * NPC menu options need the index of the NPC in the client's cached NPC array as the menu option's ID.
