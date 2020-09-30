@@ -80,9 +80,6 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
     }
 
     override fun act(player: Player) {
-        staminaActive = client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 1
-        if (!client.hasRunOn() && client.energy > (20..40).random()) click(TOGGLE_RUN)
-
         if (client.inRegion(ZMI_OUTSIDE)) return outside(player)
         if (client.inRegion(ZMI_INSIDE)) return inside(player)
         stop()
@@ -96,7 +93,11 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
 
     private fun inside(player: Player) {
         // Handled in their own threads, not the client thread, so just skip them
-        if (state == "eniola") return
+        if (state == "eniola") {
+            // We only need to know if we have a stamina pot active when we're banking with our boy big E
+            staminaActive = client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 1
+            return
+        }
         if (state == "runecrafting") return
         if (state == "npc contact") return
 
@@ -114,11 +115,16 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
         }
 
         if (state == "to altar") {
+            if (!client.hasRunOn() && client.energy > (20..40).random()) {
+                click(TOGGLE_RUN)
+            }
+
             if (player.isMoving() && client.hasInInventory(STAMINA_POTION1) && client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 0) {
                 sendGameMessage("gotta go fast")
                 return drink(STAMINA_POTION1) ?: Unit
             }
 
+            // Likely we're at the altar, if this is the case
             if (!player.isMoving() && player.isIdle()) {
                 return client.findNearest<GameObject>(RUNECRAFTING_ALTAR, 10)?.let { return preferRunecrafting(it, player) }
                     ?: Unit
@@ -156,50 +162,47 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
     }
 
     private fun preferEniola(npc: NPC) {
+        state = "eniola"
         var count: Int
 
-        if (state != "eniola") {
-            state = "eniola"
+        thread {
+            click(NPC_FIRST_OPTION(npc.index))
+            waitUntil { -> client.hasBankOpen() }
 
-            thread {
-                click(NPC_FIRST_OPTION(npc.index))
-                waitUntil { -> client.hasBankOpen() }
+            click(BANK_DEPOSIT_INVENTORY)
+            waitUntil { -> !hasRunes() }
 
-                click(BANK_DEPOSIT_INVENTORY)
-                waitUntil { -> !hasRunes() }
+            bankWithdraw(PURE_ESSENCE, Quantity.ALL)
+            waitUntil { -> hasEssence() }
 
-                bankWithdraw(PURE_ESSENCE, Quantity.ALL)
-                waitUntil { -> hasEssence() }
+            count = essenceCount()
+            bankFill(SMALL_POUCH)
+            waitUntil { essenceCount() < count }
 
-                count = essenceCount()
-                bankFill(SMALL_POUCH)
-                waitUntil { essenceCount() < count }
+            count = essenceCount()
+            bankFill(MEDIUM_POUCH)
+            waitUntil { essenceCount() < count }
 
-                count = essenceCount()
-                bankFill(MEDIUM_POUCH)
-                waitUntil { essenceCount() < count }
+            count = essenceCount()
+            bankFill(LARGE_POUCH)
+            waitUntil { essenceCount() < count }
 
-                count = essenceCount()
-                bankFill(LARGE_POUCH)
-                waitUntil { essenceCount() < count }
-
-                if (degradedPouches.any { client.hasInInventory(it) }) {
-                    bankWithdraw(COSMIC_RUNE)
-                    waitUntil { client.hasInInventory(COSMIC_RUNE) }
-                }
-
-                if (config.useStaminas() && client.energy < 60 && !staminaActive) {
-                    sendGameMessage("Getting a stamina pot (1)")
-                    bankWithdraw(STAMINA_POTION1)
-                    waitUntil { client.hasInInventory(STAMINA_POTION1) }
-                }
-
-                count = essenceCount()
-                bankWithdraw(PURE_ESSENCE, Quantity.ALL)
-                waitUntil { essenceCount() > count }
-
-                state = "inventory done"
+            if (degradedPouches.any { client.hasInInventory(it) }) {
+                bankWithdraw(COSMIC_RUNE)
+                waitUntil { client.hasInInventory(COSMIC_RUNE) }
             }
+
+            if (config.useStaminas() && client.energy < 60 && !staminaActive) {
+                sendGameMessage("Getting a stamina pot (1)")
+                bankWithdraw(STAMINA_POTION1)
+                waitUntil { client.hasInInventory(STAMINA_POTION1) }
+            }
+
+            count = essenceCount()
+            bankWithdraw(PURE_ESSENCE, Quantity.ALL)
+            waitUntil { essenceCount() > count }
+
+            state = "inventory done"
         }
     }
 
@@ -259,11 +262,11 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
 
             println("click npc continue")
             click(DIALOG_NPC_CONTINUE)
-            Thread.sleep((3000..5000L).random())
+            Thread.sleep((2000..3000L).random())
 
             println("click player continue")
             click(DIALOG_PLAYER_CONTINUE)
-            Thread.sleep((3000..5000L).random())
+            Thread.sleep((1000..2000L).random())
 
             state = "inventory done"
         }
