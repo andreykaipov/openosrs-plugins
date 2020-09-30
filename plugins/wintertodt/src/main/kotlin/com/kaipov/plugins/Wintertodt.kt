@@ -12,9 +12,10 @@ import com.kaipov.plugins.common.bot.BotConfig
 import com.kaipov.plugins.common.bot.BotOverlay
 import com.kaipov.plugins.common.bot.BotPlugin
 import com.kaipov.plugins.extensions.client.*
-import com.kaipov.plugins.extensions.client.ExtraWidgets.MINIMAP_HEALTH_ORB_TEXT
 import com.kaipov.plugins.extensions.menuoption.MenuOption
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity
+import com.kaipov.plugins.extensions.widgets.WidgetInfo.MINIMAP_HEALTH_ORB_TEXT
+import com.kaipov.plugins.extensions.widgets.getWidget
 import java.lang.Thread.sleep
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -57,9 +58,7 @@ class Overlay @Inject constructor(k: Client, plugin: Wintertodt, c: Config) : Bo
     description = "Does Wintertodt for you",
     type = PluginType.UTILITY
 )
-class Wintertodt : BotPlugin<Config, Overlay>(Wintertodt::class, Config::class) {
-
-    override val everyOtherTick = 1
+class Wintertodt : BotPlugin<Config, Overlay>(Wintertodt::class, Config::class, everyOtherTick = 1) {
 
     // The plane seems to be 0 when inspecting the tile, but via a query it's 1.
     // In any case, just include both.
