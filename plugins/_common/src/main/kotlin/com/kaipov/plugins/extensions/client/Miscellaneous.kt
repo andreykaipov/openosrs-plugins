@@ -113,6 +113,11 @@ fun Client.interacting(): Boolean {
     return localPlayer?.let { it.interacting != null }!!
 }
 
+fun Client.hasRunOn(): Boolean {
+    assert(isClientThread)
+    return getVarpValue(173) == 1
+}
+
 /**
  * Ideally we can always just look at the local player's world location and use
  * that. However, sometimes we're in an instance like the Pest Control map, and

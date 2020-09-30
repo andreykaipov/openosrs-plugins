@@ -9,11 +9,12 @@ import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.BANK_DEPOSI
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.DIALOG_NPC_CONTINUE
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.DIALOG_PLAYER_CONTINUE
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.GAME_OBJECT_FIRST_OPTION
-import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.NPC_CONTACT
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.NPC_CONTACT_DARK_MAGE
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.NPC_FIRST_OPTION
-import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.OURANIA_TELPORT
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity
+import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.SPELL_NPC_CONTACT
+import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.SPELL_OURANIA_TELELPORT
+import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.TOGGLE_RUN
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.concurrent.thread
@@ -23,8 +24,8 @@ import net.runelite.api.ItemID.*
 import net.runelite.api.NpcID.ENIOLA
 import net.runelite.api.ObjectID.LADDER_29635
 import net.runelite.api.ObjectID.RUNECRAFTING_ALTAR
-import net.runelite.api.widgets.WidgetInfo
 import net.runelite.client.config.ConfigGroup
+import net.runelite.client.config.ConfigItem
 import net.runelite.client.plugins.PluginDescriptor
 import net.runelite.client.plugins.PluginType
 import net.runelite.client.ui.overlay.components.table.TableComponent
@@ -35,7 +36,16 @@ const val ZMI_INSIDE = 12119
 const val ZMI_LADDER = LADDER_29635
 
 @ConfigGroup("com.kaipov.plugins.zmi")
-interface Config : BotConfig {}
+interface Config : BotConfig {
+    @ConfigItem(
+        keyName = "useStaminas",
+        name = "Use one-dose staminas?",
+        description = "Enable if you want to use one-dose stamina potions",
+        position = 3,
+    )
+    @JvmDefault
+    fun useStaminas() = false
+}
 
 @Singleton
 class Overlay @Inject constructor(k: Client, plugin: ZMI, c: Config) : BotOverlay(k, plugin, c) {
@@ -47,7 +57,7 @@ class Overlay @Inject constructor(k: Client, plugin: ZMI, c: Config) : BotOverla
 
 @Extension
 @PluginDescriptor(name = "ZMI", description = "Does ZMI for you", type = PluginType.UTILITY)
-class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick = 1) {
+class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick = 2) {
 
     private var staminaActive = false
 
@@ -62,7 +72,7 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
 
     val hasRunes = { -> client.getInventory().count { runes.contains(it.id) } > 0 }
     val hasEssence = { -> client.getInventory().count { it.id == PURE_ESSENCE } > 0 }
-    val essenceCount by lazy { -> client.getInventory().count { it.id == PURE_ESSENCE } }
+    val essenceCount = { -> client.getInventory().count { it.id == PURE_ESSENCE } }
 
     var state = "unknown"
     override fun setup() {
@@ -70,7 +80,9 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
     }
 
     override fun act(player: Player) {
-        if (client.interacting()) return
+        staminaActive = client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 1
+        if (!client.hasRunOn() && client.energy > (20..40).random()) click(TOGGLE_RUN)
+
         if (client.inRegion(ZMI_OUTSIDE)) return outside(player)
         if (client.inRegion(ZMI_INSIDE)) return inside(player)
         stop()
@@ -83,8 +95,6 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
     }
 
     private fun inside(player: Player) {
-        staminaActive = client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 1
-
         // Handled in their own threads, not the client thread, so just skip them
         if (state == "eniola") return
         if (state == "runecrafting") return
@@ -118,7 +128,7 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
 
         if (state == "rc done") {
             state = "going out"
-            return click(OURANIA_TELPORT)
+            return click(SPELL_OURANIA_TELELPORT)
         }
 
         if (state == "going out") return
@@ -178,13 +188,10 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
                     waitUntil { client.hasInInventory(COSMIC_RUNE) }
                 }
 
-                client.getWidget(WidgetInfo.MINIMAP_RUN_ORB_TEXT)?.let { it ->
-                    val energy = it.text.toInt()
-                    if (energy < 60 && !staminaActive) {
-                        sendGameMessage("Getting a stamina pot (1)")
-                        bankWithdraw(STAMINA_POTION1)
-                        waitUntil { client.hasInInventory(STAMINA_POTION1) }
-                    }
+                if (config.useStaminas() && client.energy < 60 && !staminaActive) {
+                    sendGameMessage("Getting a stamina pot (1)")
+                    bankWithdraw(STAMINA_POTION1)
+                    waitUntil { client.hasInInventory(STAMINA_POTION1) }
                 }
 
                 count = essenceCount()
@@ -242,7 +249,7 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
             }
 
             println("click np concact")
-            click(NPC_CONTACT)
+            click(SPELL_NPC_CONTACT)
             Thread.sleep((1000..2000L).random())
 
             println("click dark mage")

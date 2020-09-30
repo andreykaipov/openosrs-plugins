@@ -19,34 +19,11 @@ fun MenuOptionClicked.overwriteWith(o: MenuOption) {
     overwriteWith(o.id, o.opcode, o.param0, o.param1)
 }
 
-/**
- * Before we can click on something Clickable, we need these parameters.
- */
-interface Clickable {
-    val id: Int
-    val opcode: MenuOpcode
-    val param0: Int
-    val param1: Int
-}
-
-/**
- * These are shorthands enums found from their corresponding MenuOptionClicked
- * event. One can recreate these attributes by subscribing to the aforementioned
- * events and logging the relevant attributes. They're for convenience within
- * our plugins.
- */
-//enum class MenuOption(override val id: Int, override val opcode: MenuOpcode, override val param0: Int, override val param1: Int) : Clickable {
-//    GAMES_NECKLACE_TO_WINTERTODT(6, MenuOpcode.CC_OP_LOW_PRIORITY, -1, EQUIPMENT_AMULET.id),
-//    RING_OF_DUELING_TO_FEROX_ENCLAVE(4, MenuOpcode.CC_OP, -1, EQUIPMENT_RING.id),
-//}
-
 class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param1: Int) {
     /**
      * The getters inside these companion object are effectively an enum class for predefined MenuOptions.
      * We use this approach so that configurable menu options and static menu options can be instances of
      * the same class.
-     *
-     * Note that the IDs and
      */
     companion object {
         // Assumed we're wearing these jewellery items
@@ -56,10 +33,13 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         val BANK_DEPOSIT_INVENTORY  = MenuOption(1, CC_OP, -1, WidgetInfo.BANK_DEPOSIT_INVENTORY.id)
         val SPELL_OURANIA_TELELPORT = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_OURANIA_TELEPORT.id)
         val SPELL_NPC_CONTACT       = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_NPC_CONTACT.id)
-        val NPC_CONTACT_DARK_MAGE   = MenuOption(1, CC_OP, -1, MyWidgetInfo.NPC_CONTACT_DARK_MAGE.id)
         val DIALOG_NPC_CONTINUE     = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_NPC_CONTINUE.id)
         val DIALOG_PLAYER_CONTINUE  = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_PLAYER_CONTINUE.id)
-        val BANK_CLOSE              = MenuOption(0, WIDGET_TYPE_6, 11, MyWidgetInfo.BANK_CONTAINER_BUTTONS.id)
+
+        // Menu options from our extra widgets
+        val BANK_CLOSE              = MenuOption(1, CC_OP, 11, MyWidgetInfo.BANK_CONTAINER_BORDERS.id)
+        val NPC_CONTACT_DARK_MAGE   = MenuOption(1, CC_OP, -1, MyWidgetInfo.NPC_CONTACT_DARK_MAGE.id)
+        val TOGGLE_RUN              = MenuOption(1, CC_OP, -1, MyWidgetInfo.SETTINGS_TOGGLE_RUN.id)
 
         /**
          * Inventory menu options need both the itemID and index (0-27) corresponding to the location of the item in
@@ -108,12 +88,12 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
 
         // Toggling the bank quantity selection for withdrawals/deposits.
         // Note that changing these potentially changes the behavior of the above functions.
-        val BANK_QUANTITY_ONE = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_ONE.id)
-        val BANK_QUANTITY_FIVE = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_FIVE.id)
-        val BANK_QUANTITY_TEN = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_TEN.id)
-        val BANK_QUANTITY_X = MenuOption(id = 1, CC_OP, -1, com.kaipov.plugins.extensions.widgets.WidgetInfo.BANK_QUANTITY_X.id) // only selects
-        val BANK_QUANTITY_X_SET = MenuOption(id = 2, CC_OP, -1, WidgetInfo.BANK_QUANTITY_X.id) // prompt for custom amount
-        val BANK_QUANTITY_ALL = MenuOption(id = 1, CC_OP, -1, WidgetInfo.BANK_QUANTITY_ALL.id)
+        val BANK_QUANTITY_ONE   = MenuOption(id = 1, CC_OP, -1, MyWidgetInfo.BANK_QUANTITY_ONE.id)
+        val BANK_QUANTITY_FIVE  = MenuOption(id = 1, CC_OP, -1, MyWidgetInfo.BANK_QUANTITY_FIVE.id)
+        val BANK_QUANTITY_TEN   = MenuOption(id = 1, CC_OP, -1, MyWidgetInfo.BANK_QUANTITY_TEN.id)
+        val BANK_QUANTITY_X     = MenuOption(id = 1, CC_OP, -1, MyWidgetInfo.BANK_QUANTITY_X.id) // only selects
+        val BANK_QUANTITY_X_SET = MenuOption(id = 2, CC_OP, -1, MyWidgetInfo.BANK_QUANTITY_X.id) // prompt for custom amount
+        val BANK_QUANTITY_ALL   = MenuOption(id = 1, CC_OP, -1, MyWidgetInfo.BANK_QUANTITY_ALL.id)
 
         /**
          * NPC menu options need the index of the NPC in the client's cached NPC array as the menu option's ID.
@@ -123,10 +103,10 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
          * when another NPC's talk option might their third option. Adjust your plugins accordingly.
          * May be affected by menu swapper options.
          */
-        fun NPC_FIRST_OPTION(index: Int) = MenuOption(id = index, MenuOpcode.NPC_FIRST_OPTION, 0, 0)
-        fun NPC_SECOND_OPTION(index: Int) = MenuOption(id = index, MenuOpcode.NPC_SECOND_OPTION, 0, 0)
+        fun NPC_FIRST_OPTION(index: Int)  = MenuOption(id = index, NPC_FIRST_OPTION, 0, 0)
+        fun NPC_SECOND_OPTION(index: Int) = MenuOption(id = index, NPC_SECOND_OPTION, 0, 0)
 
-        fun GAME_OBJECT_FIRST_OPTION(o: GameObject) = MenuOption(o.id, MenuOpcode.GAME_OBJECT_FIRST_OPTION, o.sceneMinLocation.x, o.sceneMinLocation.y)
+        fun GAME_OBJECT_FIRST_OPTION(o: GameObject) = MenuOption(o.id, GAME_OBJECT_FIRST_OPTION, o.sceneMinLocation.x, o.sceneMinLocation.y)
     }
 
     override fun toString() = "id=${id}; opcode=${opcode.name}(${opcode.id}); params=(${param0}, ${param1})"

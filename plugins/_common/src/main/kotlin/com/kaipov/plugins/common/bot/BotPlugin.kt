@@ -274,6 +274,7 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
 
     /** ----------- miscellaneous utility functions ----------- **/
 
+
     fun sendGameMessage(message: String?) {
         chatMessageManager.queue(
             QueuedMessage
@@ -294,7 +295,6 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
             if (timeSlept > max) break
         }
     }
-
 
 /*
 else if (isInPestControl) {
