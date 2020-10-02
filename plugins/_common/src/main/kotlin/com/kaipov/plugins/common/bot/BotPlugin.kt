@@ -139,13 +139,17 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
     }
 
     // Order doesn't really matter but just inverse stop
-    fun stop() {
+    fun stop(msg: String = "") {
         teardown()
         stopSubscribers()
         overlayManager.remove(overlay)
         startTime = null
         running = false
         log.info("Stopped")
+
+        if (msg != "") {
+            sendGameMessage(msg)
+        }
     }
 
     // Custom setup/teardown hooks for plugins that have specific start/stop logic.
@@ -285,14 +289,21 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         )
     }
 
-    fun waitUntil(max: Long = 4000L, predicate: () -> Boolean) {
+    /**
+     * Waits for max amount of milliseconds until the predicate is true.
+     * If it times out, runs the final function.
+     */
+    fun waitUntil(max: Long = 4000L, final: () -> Unit = {}, predicate: () -> Boolean) {
         var timeSlept: Long = 0
         while (!predicate()) {
             val t = (500..1000L).random()
             Thread.sleep(t)
             timeSlept += t
 
-            if (timeSlept > max) break
+            if (timeSlept > max) {
+                final()
+                break
+            }
         }
     }
 
