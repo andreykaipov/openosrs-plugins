@@ -3,8 +3,8 @@ extra["Repository"] = "https://github.com/andreykaipov/osrs-plugins"
 extra["License"] = "2-Clause BSD License"
 
 plugins {
-    kotlin("jvm") version "1.4.10"
-    kotlin("kapt") version "1.4.10"
+    kotlin("jvm")
+    kotlin("kapt")
 }
 
 allprojects {
@@ -34,9 +34,10 @@ subprojects {
     } catch (_: Exception) {
         "n/a"
     }
-    println(extra["Description"])
 
     dependencies {
+        if (project.path != ":_common") implementation(project(":_common"))
+
         kapt(group = "org.pf4j", name = "pf4j", version = "3.4.1")
         implementation(group = "org.pf4j", name = "pf4j", version = "3.4.1")
 
@@ -111,6 +112,22 @@ subprojects {
                 copy {
                     from("./build/libs/")
                     into("../../release/")
+                }
+            }
+
+            if (project.path != ":_common") {
+                val commonJar: File = project(":_common").tasks["jar"].outputs.files.singleFile
+                val kotlinStdlib: File = configurations.runtimeClasspath.get().filter { it.path.contains("kotlin-stdlib-${kotlin.coreLibrariesVersion}") }.singleFile
+
+                // For final release jar
+                from(zipTree(commonJar), zipTree(kotlinStdlib))
+
+                // For hot-reloading during development
+                doLast {
+                    copy {
+                        into("./build/deps/")
+                        from(commonJar, kotlinStdlib)
+                    }
                 }
             }
         }

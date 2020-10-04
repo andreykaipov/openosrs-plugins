@@ -5,6 +5,12 @@ file("plugins").list().forEach {
     include(":$it")
 }
 
+pluginManagement.resolutionStrategy.eachPlugin {
+    if (requested.id.id.startsWith("org.jetbrains.kotlin.")) {
+        useVersion("1.4.10")
+    }
+}
+
 /**
  * To make plugin hotswapping work during development, each plugin's project
  * directory must contain a build file of the name $name.gradle.kts because
