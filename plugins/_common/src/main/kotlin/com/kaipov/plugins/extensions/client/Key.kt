@@ -38,7 +38,8 @@ fun Client.pressKeys(keys: String) {
 }
 
 /**
- * For keys that don't map to unicode characters like VK_ENTER or VK_ESCAPE.
+ * For keys that don't map to unicode characters like
+ * VK_ENTER, VK_ESCAPE, or VK_SPACE.
  */
 private fun Client.keyEvent(id: Int, keyCode: Int) {
     return canvas.dispatchEvent(KeyEvent(canvas, id, System.currentTimeMillis(), 0, keyCode, CHAR_UNDEFINED))

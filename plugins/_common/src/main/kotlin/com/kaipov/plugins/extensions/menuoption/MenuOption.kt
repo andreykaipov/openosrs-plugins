@@ -1,6 +1,7 @@
 package com.kaipov.plugins.extensions.menuoption
 
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity.*
+import java.lang.IllegalArgumentException
 import net.runelite.api.*
 import net.runelite.api.MenuOpcode.*
 import net.runelite.api.events.MenuOptionClicked
@@ -33,6 +34,7 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         val BANK_DEPOSIT_INVENTORY  = MenuOption(1, CC_OP, -1, WidgetInfo.BANK_DEPOSIT_INVENTORY.id)
         val SPELL_OURANIA_TELELPORT = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_OURANIA_TELEPORT.id)
         val SPELL_NPC_CONTACT       = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_NPC_CONTACT.id)
+        val SPELL_TAN_LEATHER       = MenuOption(1, CC_OP, -1, WidgetInfo.SPELL_TAN_LEATHER.id)
         val DIALOG_NPC_CONTINUE     = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_NPC_CONTINUE.id)
         val DIALOG_PLAYER_CONTINUE  = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_PLAYER_CONTINUE.id)
 
@@ -49,14 +51,27 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         fun INVENTORY_FIRST_OPTION(index: Int, id: Int)  = MenuOption(id, ITEM_FIRST_OPTION, index, WidgetInfo.INVENTORY.id)
         fun INVENTORY_SECOND_OPTION(index: Int, id: Int) = MenuOption(id, ITEM_SECOND_OPTION, index, WidgetInfo.INVENTORY.id)
         fun USE(index: Int, id: Int)                     = MenuOption(id, ITEM_USE, index, WidgetInfo.INVENTORY.id)
+        fun USE_ON_ITEM(index: Int, id: Int)             = MenuOption(id, ITEM_USE_ON_WIDGET_ITEM, index, WidgetInfo.INVENTORY.id)
         fun DROP(index: Int, id: Int)                    = MenuOption(id, ITEM_DROP, index, WidgetInfo.INVENTORY.id)
 
         /**
          * Banking inventory menu options use a different ID and opcode for the different quantities to withdraw or
          * deposit. The index (0-27) corresponds to the location of the item in the bank/inventory respectively.
+         *
+         * A quantity of X will open up a prompt, and won't withdraw anything until the client sends the appropriate
+         * keys. PRESET corresponds to that already set quantity.
          */
-        enum class Quantity {
-            ONE, FIVE, TEN, ALL
+        enum class Quantity(var value: Int) {
+            ONE(1), FIVE(5), TEN(10), PRESET(-1), X(-1), ALL(28);
+
+            fun at(v: Int): Quantity {
+                value = when (this) {
+                    PRESET -> v
+                    X -> v
+                    else -> throw IllegalArgumentException("Can only set PRESET and X Quantities")
+                }
+                return this
+            }
         }
 
         // Assumes the selected quantity in the bank is set to "1" !!! If it's something else, the behavior will be
@@ -64,20 +79,24 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         // of 3 will withdraw one, so before calling this method, make sure we've selected "1".
         fun DEPOSIT(index: Int, quantity: Quantity): MenuOption {
             val p = when (quantity) {
-                ONE  -> Pair(2, CC_OP)
-                FIVE -> Pair(4, CC_OP)
-                TEN  -> Pair(5, CC_OP)
-                ALL  -> Pair(8, CC_OP_LOW_PRIORITY)
+                ONE    -> Pair(2, CC_OP)
+                FIVE   -> Pair(4, CC_OP)
+                TEN    -> Pair(5, CC_OP)
+                PRESET -> Pair(6, CC_OP)
+                X      -> Pair(7, CC_OP_LOW_PRIORITY)
+                ALL    -> Pair(8, CC_OP_LOW_PRIORITY)
             }
             return MenuOption(id = p.first, opcode = p.second, index, WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER.id)
         }
 
         fun WITHDRAW(index: Int, quantity: Quantity): MenuOption {
             val p = when (quantity) {
-                ONE  -> Pair(1, CC_OP)
-                FIVE -> Pair(3, CC_OP)
-                TEN  -> Pair(4, CC_OP)
-                ALL  -> Pair(7, CC_OP_LOW_PRIORITY)
+                ONE    -> Pair(1, CC_OP)
+                FIVE   -> Pair(3, CC_OP)
+                TEN    -> Pair(4, CC_OP)
+                PRESET -> Pair(5, CC_OP)
+                X      -> Pair(6, CC_OP_LOW_PRIORITY)
+                ALL    -> Pair(7, CC_OP_LOW_PRIORITY)
             }
             return MenuOption(id = p.first, opcode = p.second, index, WidgetInfo.BANK_ITEM_CONTAINER.id)
         }
@@ -107,6 +126,7 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         fun NPC_SECOND_OPTION(index: Int) = MenuOption(id = index, NPC_SECOND_OPTION, 0, 0)
 
         fun GAME_OBJECT_FIRST_OPTION(o: GameObject) = MenuOption(o.id, GAME_OBJECT_FIRST_OPTION, o.sceneMinLocation.x, o.sceneMinLocation.y)
+        fun GAME_OBJECT_SECOND_OPTION(o: TileObject) = MenuOption(o.id, GAME_OBJECT_SECOND_OPTION, o.localLocation.sceneX, o.localLocation.sceneY)
     }
 
     override fun toString() = "id=${id}; opcode=${opcode.name}(${opcode.id}); params=(${param0}, ${param1})"

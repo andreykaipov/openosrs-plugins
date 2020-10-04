@@ -1,10 +1,8 @@
-package com.kaipov.plugins.common.bot.state
+package com.kaipov.plugins.common.bot
 
-import com.kaipov.plugins.common.bot.BotConfig
-import com.kaipov.plugins.common.bot.BotPlugin
-import com.kaipov.plugins.common.bot.state.DetailedStates.Stop
-import com.kaipov.plugins.common.bot.state.States.Start
-import com.kaipov.plugins.common.bot.state.States.Unknown
+import com.kaipov.plugins.common.bot.DetailedStates.Stop
+import com.kaipov.plugins.common.bot.States.Start
+import com.kaipov.plugins.common.bot.States.Unknown
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 import kotlin.reflect.KClass
@@ -44,4 +42,24 @@ abstract class StateBotPlugin<C : BotConfig, O : OverlayPanel>(
     override fun teardown() {
         threads.forEach { it.interrupt() }
     }
+}
+
+interface State
+
+interface DetailedState : State {
+    var msg: String
+
+    fun with(msg: String): State {
+        this.msg = msg
+        return this
+    }
+}
+
+enum class States : State {
+    Unknown,
+    Start,
+}
+
+enum class DetailedStates(override var msg: String) : DetailedState {
+    Stop(""),
 }

@@ -1,6 +1,9 @@
 package com.kaipov.plugins.common.bot
 
 import com.google.inject.Provides
+import com.kaipov.plugins.common.bot.extras.sendGameMessage
+import com.kaipov.plugins.common.bot.extras.wait
+import com.kaipov.plugins.common.bot.extras.waitUntil
 import com.kaipov.plugins.extensions.client.*
 import com.kaipov.plugins.extensions.menuoption.MenuOption
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.BANK_DEPOSIT_NINTH_OPTION
@@ -27,10 +30,7 @@ import net.runelite.api.events.GameTick
 import net.runelite.api.events.MenuOptionClicked
 import net.runelite.api.widgets.WidgetInfo
 import net.runelite.client.callback.ClientThread
-import net.runelite.client.chat.ChatColorType
-import net.runelite.client.chat.ChatMessageBuilder
 import net.runelite.client.chat.ChatMessageManager
-import net.runelite.client.chat.QueuedMessage
 import net.runelite.client.config.ConfigManager
 import net.runelite.client.eventbus.EventBus
 import net.runelite.client.input.KeyManager
@@ -178,14 +178,9 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         }
     }
 
-//    fun VarbitDefinition.mask() =
-//        (1 shl mostSignificantBit - leastSignificantBit + 1) - 1
-//    }
-
     override fun startUp() {
         keyManager.registerKeyListener(hotkeyListener)
     }
-
 
     override fun shutDown() {
         if (running) stop()
@@ -380,108 +375,4 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         }
         client.singleClickCenterScreenRandom()
     }
-
-    /** ----------- miscellaneous utility functions ----------- **/
-
-
-    fun sendGameMessage(message: String?) {
-        chatMessageManager.queue(
-            QueuedMessage
-                .builder()
-                .type(ChatMessageType.CONSOLE)
-                .runeLiteFormattedMessage(ChatMessageBuilder().append(ChatColorType.HIGHLIGHT).append(message).build())
-                .build()
-        )
-    }
-
-    val wait = { r: IntRange -> Thread.sleep((r.first..r.last.toLong()).random()) }
-
-    /**
-     * Waits for max amount of milliseconds until the predicate is true.
-     * If it times out, runs the final function.
-     */
-    fun waitUntil(max: Long = 4000L, final: () -> Unit = {}, predicate: () -> Boolean) {
-        var timeSlept: Long = 0
-        while (!predicate()) {
-            val t = (500..1000L).random()
-            Thread.sleep(t)
-            timeSlept += t
-
-            if (timeSlept > max) {
-                final()
-                break
-            }
-        }
-    }
-
-    /**
-     * Lol
-     * Returns when the player has been idle for more than the given window of time
-     */
-    fun waitUntilPlayerHasBeenIdleForMoreThan(window: IntRange, timeout: Long) {
-        waitUntil(timeout) {
-            if (client.localPlayer?.animation == IDLE) {
-                wait(window)
-                return@waitUntil client.localPlayer?.animation == IDLE
-            }
-            return@waitUntil false
-        }
-    }
-
-/*
-else if (isInPestControl) {
-    if (isInNewGame) {
-        log.info("new game")
-    }
-    var target: NPC? = utils.findNearestNpcWithin(player.worldLocation, 25, "Brawler", "Defiler", "Ravager", "Shifter", "Torcher")
-    // Simulate a loop because sleeps doesn't work without freezing the fkn client
-    if (count < 7 && target == null && !isInNewGame) {
-        log.info("Coudn't find a target, trying again: $count")
-        target = utils.findNearestNpcWithin(player.worldLocation, 25, "Brawler", "Defiler", "Ravager", "Shifter", "Torcher")
-        count++
-        return
-    }
-    count = 0
-    // Priority check for NPCs
-    val nearbyBrawler: NPC? = utils.findNearestNpcWithin(player.worldLocation, 5, "Brawler")
-    if (nearbyBrawler != null) {
-        target = nearbyBrawler
-    }
-    //Colored portals & spinners
-    val priorityTarget: NPC? = utils.findNearestNpcWithin(
-        player.worldLocation, 25,
-        NpcID.PORTAL, NpcID.PORTAL_1740, NpcID.PORTAL_1741, NpcID.PORTAL_1742,
-        NpcID.SPINNER, NpcID.SPINNER_1710, NpcID.SPINNER_1711, NpcID.SPINNER_1712, NpcID.SPINNER_1713
-    )
-    if (priorityTarget != null) {
-        target = priorityTarget
-    }
-    if (target != null) { // Found a target
-        if (player.interacting != null) { // If player is interacting
-            val currentNPC = player.interacting
-            if (currentNPC != null && currentNPC.healthRatio == -1) {
-                log.info("Interacting and NPC has no health bar, finding new NPC")
-                targetMenu = MenuEntry("", target.name.toString() + "(" + target.id + ")", target.index, MenuOpcode.NPC_SECOND_OPTION.id, 0, 0, false)
-                utils.delayClickRandomPointCenter(-100, 100, utils.getRandomIntBetweenRange(100, 200))
-            }
-        } else {
-            log.info("Attacking new target")
-            targetMenu = MenuEntry("", target.name.toString() + "(" + target.id + ")", target.index, MenuOpcode.NPC_SECOND_OPTION.id, 0, 0, false)
-            utils.delayClickRandomPointCenter(-100, 100, utils.getRandomIntBetweenRange(100, 200))
-        }
-    } else { // No targets found, open gate
-        val gate: WallObject? = utils.findNearestWallObject(14235, 14233)
-        if (gate != null) {
-            log.info("No NPCs found, opening nearest gate")
-            targetMenu = MenuEntry("", "gate", gate.id, MenuOpcode.GAME_OBJECT_FIRST_OPTION.id, gate.localLocation.sceneX, gate.localLocation.sceneY, false)
-            utils.delayClickRandomPointCenter(-100, 100, utils.getRandomIntBetweenRange(100, 200))
-        }
-    }
 }
-
-    */
-}
-
-
-//14233 left
-//14235 right

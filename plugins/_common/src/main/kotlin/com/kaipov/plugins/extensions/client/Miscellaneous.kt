@@ -2,6 +2,7 @@ package com.kaipov.plugins.extensions.client;
 
 import java.awt.Dimension
 import net.runelite.api.*
+import net.runelite.api.InventoryID.INVENTORY
 import net.runelite.api.coords.WorldPoint
 import net.runelite.api.events.Event
 import net.runelite.api.queries.*
@@ -29,19 +30,52 @@ fun Client.isWearing(slot: EquipmentInventorySlot): Boolean {
     return item != null && item.id != -1
 }
 
+/**
+ * The size of the returned list will always be 28. This makes things more
+ * consistent as normally the size varies depending on if an item has not yet
+ * occupied a slot since the game started.
+ *
+ * Empty slots in the inventory have ID -1 and quantity 0.
+ *
+ * @see net.runelite.api.ItemContainer
+ */
 fun Client.getInventory(): List<Item> {
-    return getItemContainer(InventoryID.INVENTORY)?.items.orEmpty().toList()
+    val inventory = getItemContainer(INVENTORY)?.items.orEmpty().toMutableList()
+    inventory.addAll(List(28 - inventory.size) { Item(-1, 0) })
+    return inventory
 }
 
-// Returns the index of the first item matching the given item ID in our
-// inventory, or -1 if there's no such item.
-fun Client.findFirstInInventory(itemID: Int, quantity: Int = 1): Int {
-    return getInventory().indexOfFirst { it.id == itemID && it.quantity >= quantity }
+/**
+ * Checks the inventory for the specified item with an optional quantity.
+ * If the quantity is 0 or negative, this always returns true. If the quantity
+ * is less than the count, we're ok.
+ */
+fun Client.hasAtLeastInInventory(itemID: Int, quantity: Int = 1): Boolean {
+    val count = getItemContainer(INVENTORY)?.count(itemID) ?: 0
+    return count >= quantity
 }
 
-fun Client.hasInInventory(itemID: Int, quantity: Int = 1): Boolean {
-    return findFirstInInventory(itemID, quantity) != -1
+fun Client.hasNoMoreThanInInventory(itemID: Int, quantity: Int = 1): Boolean {
+    val count = getItemContainer(INVENTORY)?.count(itemID) ?: 0
+    return count <= quantity
 }
+
+fun Client.hasExactlyInInventory(itemID: Int, quantity: Int = 1): Boolean {
+    val count = getItemContainer(INVENTORY)?.count(itemID) ?: 0
+    return count == quantity
+}
+
+fun Client.hasInInventory(itemID: Int, quantity: Int = 1) = hasAtLeastInInventory(itemID, quantity)
+
+fun Client.hasEmptyInventory() = getInventory().all { it.id == -1 && it.quantity == 0 }
+
+/**
+ * Returns the first or last index of the item matching the given item ID in our
+ * inventory, or -1 if there's no such item.
+ */
+fun Client.findInInventory(itemID: Int) = findFirstInInventory(itemID)
+fun Client.findFirstInInventory(itemID: Int) = getInventory().indexOfFirst { it.id == itemID }
+fun Client.findLastInInventory(itemID: Int) = getInventory().indexOfLast { it.id == itemID }
 
 fun Client.hasBankOpen(): Boolean {
     return getItemContainer(InventoryID.BANK) != null
@@ -61,7 +95,7 @@ fun Client.findFirstInBank(itemID: Int): Int {
     return getBank().indexOfFirst { it.id == itemID }
 }
 
-fun Client.hasInIBank(itemID: Int): Boolean {
+fun Client.hasInBank(itemID: Int): Boolean {
     return findFirstInBank(itemID) != -1
 }
 
@@ -158,7 +192,7 @@ inline fun <reified T> Client.findNearestWithin(p: WorldPoint, distance: Int, va
     val result = when (T::class) {
         NPC::class -> NPCQuery().idEquals(*ids).result(this)
         GameObject::class -> GameObjectQuery().isWithinDistance(p, distance).idEquals(*ids).result(this)
-        WallObject::class -> WallObjectQuery().isWithinDistance(p, distance).idEquals(*ids).result(this)
+        WallObject::class -> WallObjectQuery().filter { it.worldLocation.distanceTo2D(p) <= distance }.idEquals(*ids).result(this)
         GroundObject::class -> GroundObjectQuery().isWithinDistance(p, distance).idEquals(*ids).result(this)
         DecorativeObject::class -> DecorativeObjectQuery().isWithinDistance(p, distance).idEquals(*ids).result(this)
         else -> return null
