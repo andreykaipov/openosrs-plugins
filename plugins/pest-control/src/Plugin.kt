@@ -2,7 +2,6 @@ package com.kaipov.plugins
 
 import com.kaipov.plugins.PestControl.Regions.PEST_CONTROL_ISLAND
 import com.kaipov.plugins.PestControl.Regions.VOID_KNIGHT_OUTPOST
-import com.kaipov.plugins.State.*
 import com.kaipov.plugins.common.bot.BotConfig
 import com.kaipov.plugins.common.bot.BotOverlay
 import com.kaipov.plugins.common.bot.BotPlugin
@@ -31,6 +30,26 @@ interface Config : BotConfig {
 @Singleton
 class Overlay @Inject constructor(k: Client, plugin: PestControl, c: Config) : BotOverlay(k, plugin, c)
 
+enum class State {
+    UNKNOWN,
+    ACTING,
+    ON_OUTPOST,
+    ON_BOAT,
+    ON_ISLAND,
+    FIGHTING,
+    ;
+
+    override fun toString(): String {
+        return name.replace("_", " ").toLowerCase()
+    }
+}
+
+enum class BoatGangplanks(val ID: Int) {
+    NOVICE(14315),
+    INTERMEDIATE(25631),
+    VETERAN(25632),
+}
+
 @Extension
 @PluginDescriptor(name = "Pest Control", description = "Does Pest Control for you", type = PluginType.UTILITY)
 class PestControl : BotPlugin<Config, Overlay>(PestControl::class, Config::class) {
@@ -39,7 +58,7 @@ class PestControl : BotPlugin<Config, Overlay>(PestControl::class, Config::class
         const val PEST_CONTROL_ISLAND = 10536
     }
 
-    var state: State = UNKNOWN
+    var state: State = State.UNKNOWN
 
     override fun act(player: Player) {
         if (client.interacting()) return
@@ -48,9 +67,9 @@ class PestControl : BotPlugin<Config, Overlay>(PestControl::class, Config::class
     }
 
     private fun actOnOutpost() {
-        state = client.getWidget(WidgetInfo.PEST_CONTROL_BOAT_INFO)?.let { ON_BOAT } ?: ON_OUTPOST
+        state = client.getWidget(WidgetInfo.PEST_CONTROL_BOAT_INFO)?.let { State.ON_BOAT } ?: State.ON_OUTPOST
 
-        if (state == ON_BOAT) {
+        if (state == State.ON_BOAT) {
             // Assuming I've got piety on my quick prayers
             if (!client.isPrayerActive(Prayer.PIETY)) {
                 client.getWidget(WidgetInfo.MINIMAP_PRAYER_ORB_TEXT)?.let { it ->
@@ -72,7 +91,7 @@ class PestControl : BotPlugin<Config, Overlay>(PestControl::class, Config::class
     }
 
     private fun actOnIsland(player: Player) {
-        state = ON_ISLAND
+        state = State.ON_ISLAND
 
         val findEnemy = { enemies: List<String> ->
             NPCQuery()

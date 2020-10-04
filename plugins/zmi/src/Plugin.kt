@@ -3,6 +3,8 @@ package com.kaipov.plugins
 import com.kaipov.plugins.common.bot.BotConfig
 import com.kaipov.plugins.common.bot.BotOverlay
 import com.kaipov.plugins.common.bot.BotPlugin
+import com.kaipov.plugins.common.bot.extras.sendGameMessage
+import com.kaipov.plugins.common.bot.extras.waitUntil
 import com.kaipov.plugins.extensions.client.*
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.BANK_CLOSE
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.BANK_DEPOSIT_INVENTORY
@@ -18,6 +20,7 @@ import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.TOGGLE_RUN
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.concurrent.thread
+import kotlin.properties.Delegates
 import net.runelite.api.*
 import net.runelite.api.AnimationID.MAGIC_LUNAR_SHARED
 import net.runelite.api.ItemID.*
@@ -74,7 +77,12 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
     val hasEssence = { -> client.getInventory().count { it.id == PURE_ESSENCE } > 0 }
     val essenceCount = { -> client.getInventory().count { it.id == PURE_ESSENCE } }
 
-    var state = "unknown"
+    var state: String by Delegates.observable("unknown") { _, old, new ->
+        when (new) {
+            "eniola" -> client.findNearest<NPC>(ENIOLA, 10)?.let { handleEniola(it) }
+        }
+    }
+
     override fun setup() {
         state = "unknown"
     }
@@ -92,10 +100,19 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
     }
 
     private fun inside(player: Player) {
-        // Handled in their own threads, not the client thread, so just skip them
+        when (state) {
+            "outside" -> state = "eniola"
+            "eniola" -> {
+                staminaActive = client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 1
+            }
+            "runecrafting" -> Unit
+            "npc contact" -> Unit
+            "going out" -> Unit
+        }
+
+        // Handled by the observable state property, so
         if (state == "eniola") {
             // We only need to know if we have a stamina pot active when we're banking with our boy big E
-            staminaActive = client.getVar(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 1
             return
         }
         if (state == "runecrafting") return
@@ -139,10 +156,6 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
 
         if (state == "going out") return
 
-        if (state == "outside") {
-            return client.findNearest<NPC>(ENIOLA, 10)?.let { return preferEniola(it) } ?: Unit
-        }
-
         // Try something
         if (state == "unknown") {
             if (!hasEssence()) {
@@ -161,8 +174,7 @@ class ZMI : BotPlugin<Config, Overlay>(ZMI::class, Config::class, everyOtherTick
         return
     }
 
-    private fun preferEniola(npc: NPC) {
-        state = "eniola"
+    private fun handleEniola(npc: NPC) {
         var count: Int
 
         thread {

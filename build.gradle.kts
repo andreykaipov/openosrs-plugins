@@ -23,12 +23,12 @@ allprojects {
 subprojects {
     group = "com.openosrs.externals"
     kapt.includeCompileClasspath = false
+    kotlin.sourceSets["main"].kotlin.srcDir("src")
 
     // Read from source to avoid duplicating this configuration for both OpenOSRS and pf4j manifest metadata
     extra["ID"] = project.path.substring(1)
     extra["Description"] = try {
-        val name = (extra["ID"] as String).split("-").joinToString("") { it.capitalize() }
-        val f = File("${project.projectDir}/src/main/kotlin/com/kaipov/plugins/$name.kt")
+        val f = File("${project.projectDir}/src/Plugin.kt")
         val regexp = "description.*=.*\"([^\"]+?)\",".toRegex()
         regexp.find(f.readText())?.groupValues?.get(1)!!
     } catch (_: Exception) {

@@ -5,15 +5,18 @@ dependencies {
 }
 
 val commonJar = project(":_common").tasks["jar"].outputs.files.singleFile
+val kotlinStdilib = configurations.runtimeClasspath.get().filter { it.path.contains("kotlin-stdlib-1.4.10") }.singleFile
 
 tasks {
     withType<Jar> {
-        from(zipTree(commonJar))
+        // For final release jar
+        from(zipTree(commonJar), zipTree(kotlinStdilib))
 
+        // For hot-reloading during development
         doLast {
             copy {
                 into("./build/deps/")
-                from(commonJar)
+                from(commonJar, kotlinStdilib)
             }
         }
     }

@@ -11,6 +11,7 @@ import com.kaipov.plugins.Wintertodt.Regions.WINTERTODT_OUTSIDE
 import com.kaipov.plugins.common.bot.BotConfig
 import com.kaipov.plugins.common.bot.BotOverlay
 import com.kaipov.plugins.common.bot.BotPlugin
+import com.kaipov.plugins.common.bot.extras.sendGameMessage
 import com.kaipov.plugins.extensions.client.*
 import com.kaipov.plugins.extensions.menuoption.MenuOption
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity
@@ -130,7 +131,7 @@ class Wintertodt : BotPlugin<Config, Overlay>(Wintertodt::class, Config::class, 
                     client.hasInInventory(SUPPLY_CRATE).ifTrue { wait(); bankDeposit(SUPPLY_CRATE, Quantity.ALL) }
                     client.hasInInventory(JUG).ifTrue { wait(); bankDeposit(JUG, Quantity.ALL) }
                     client.hasInInventory(JUG_OF_WINE).ifTrue { wait(); bankDeposit(JUG_OF_WINE, Quantity.ALL) }
-                    client.hasInIBank(JUG_OF_WINE).ifTrue { wait(); bankWithdraw(JUG_OF_WINE, Quantity.TEN); (1..3).forEach { wait(); bankWithdraw(JUG_OF_WINE); } } // 13 lol
+                    client.hasInBank(JUG_OF_WINE).ifTrue { wait(); bankWithdraw(JUG_OF_WINE, Quantity.TEN); (1..3).forEach { wait(); bankWithdraw(JUG_OF_WINE); } } // 13 lol
                         ?: run { sendGameMessage("You ain't got no wines bruv"); stop() }
                     client.isWearing(AMULET).ifFalse { wait(); bankWithdraw(GAMES_NECKLACE8); wait();wait(); bankWear(GAMES_NECKLACE8) }
                     client.isWearing(RING).ifFalse { wait(); bankWithdraw(RING_OF_DUELING8); wait();wait(); bankWear(RING_OF_DUELING8) }

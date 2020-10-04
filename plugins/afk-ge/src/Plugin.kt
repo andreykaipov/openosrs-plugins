@@ -39,7 +39,6 @@ enum class Action {
     type = PluginType.UTILITY
 )
 class AFKGE : StateBotPlugin<Config, Overlay>(AFKGE::class, Config::class) {
-
     override fun action() {
         when (val action = config.action()) {
             TAN_LEATHER -> tanLeather()
