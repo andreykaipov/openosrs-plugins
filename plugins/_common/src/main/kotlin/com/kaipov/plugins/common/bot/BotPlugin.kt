@@ -9,18 +9,23 @@ import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.DROP
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.INVENTORY_FIRST_OPTION
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.INVENTORY_SECOND_OPTION
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity
+import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.USE
+import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.USE_ON_ITEM
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.WITHDRAW
 import com.kaipov.plugins.extensions.menuoption.overwriteWith
+import java.awt.event.KeyEvent.VK_ENTER
 import java.time.Duration
 import java.time.Instant
 import java.util.function.Supplier
 import javax.inject.Inject
+import kotlin.math.min
 import kotlin.reflect.KClass
 import net.runelite.api.*
 import net.runelite.api.AnimationID.IDLE
 import net.runelite.api.coords.LocalPoint
 import net.runelite.api.events.GameTick
 import net.runelite.api.events.MenuOptionClicked
+import net.runelite.api.widgets.WidgetInfo
 import net.runelite.client.callback.ClientThread
 import net.runelite.client.chat.ChatColorType
 import net.runelite.client.chat.ChatMessageBuilder
@@ -136,9 +141,14 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         overlayManager.add(overlay)
         startSubscribers()
         setup()
+
+        clientThread.invoke(Runnable {
+            VARBIT_WITHDRAW_X_AMOUNT = client.getVarbitDefinition(Varbits.WITHDRAW_X_AMOUNT.id)
+                ?: return@Runnable stop("ca")
+        })
     }
 
-    // Order doesn't really matter but just inverse stop
+    // Order shouldn't really matter but just the inverse of start above for consistency
     fun stop(msg: String = "") {
         teardown()
         stopSubscribers()
@@ -168,9 +178,14 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         }
     }
 
+//    fun VarbitDefinition.mask() =
+//        (1 shl mostSignificantBit - leastSignificantBit + 1) - 1
+//    }
+
     override fun startUp() {
         keyManager.registerKeyListener(hotkeyListener)
     }
+
 
     override fun shutDown() {
         if (running) stop()
@@ -252,8 +267,82 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
     private fun clickInventoryFirstOptionOf(id: Int) = client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(INVENTORY_FIRST_OPTION(it, id)) }
     private fun clickInventorySecondOptionOf(id: Int) = client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(INVENTORY_SECOND_OPTION(it, id)) }
 
-    fun bankDeposit(id: Int, q: Quantity = Quantity.ONE) = client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(DEPOSIT(it, q)) }
-    fun bankWithdraw(id: Int, q: Quantity = Quantity.ONE) = client.findFirstInBank(id).takeIf { it >= 0 }?.let { click(WITHDRAW(it, q)) }
+
+    private lateinit var VARBIT_WITHDRAW_X_AMOUNT: VarbitDefinition
+    val presetBankAmount get() = VARBIT_WITHDRAW_X_AMOUNT.value()
+
+    /**
+     * @see net.runelite.mixins.VarbitMixin
+     * #getVarbitValue(int[] varps, int varbitId)
+     */
+    fun VarbitDefinition.mask() = (1 shl ((mostSignificantBit - leastSignificantBit) + 1)) - 1
+    fun VarbitDefinition.value() = (client.varps[index] shr leastSignificantBit) and mask()
+
+    /**
+     * Must be called after we click(WITHDRAW) or click(DEPOSIT)
+     */
+    fun Quantity.fixPresetHandleX(): Unit? {
+        return when (this) {
+            Quantity.PRESET -> value = presetBankAmount
+            Quantity.X -> {
+                if (value == -1) throw IllegalArgumentException("Use Quantity.X.at(n) to set an amount")
+                wait(500..1500)
+                client.pressKeys(value.toString())
+                client.pressKey(VK_ENTER)
+            }
+            else -> Unit
+        }
+    }
+
+    fun bankDeposit(id: Int, q: Quantity = Quantity.ONE): Unit? {
+        assert(!client.isClientThread)
+
+        val currentCount = client.getInventory().count { it.id == id }
+
+        client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(DEPOSIT(it, q)) } ?: return null
+        q.fixPresetHandleX() ?: return null
+
+        val countExpected = currentCount - min(q.value, currentCount)
+        return waitUntil(4000L, { println("timed out") }) { client.hasExactlyInInventory(id, countExpected) }
+    }
+
+    /**
+     * Get the current count of the item in our inventory, takes it out of the
+     * bank if it exists, waiting until it pops up in our inventory. It's like
+     * a few hundred milliseconds. Only for non-stackable items.
+     *
+     * Added complexity to handle X and PRESET Quantities.
+     *
+     * Notes:
+     * - Returns null if the item is not found within our bank.
+     * - Assumes the bank quantity is set to 1.
+     * - For quantities of X and PRESET, we read varbits or enter input.
+     */
+    fun bankWithdraw(id: Int, q: Quantity = Quantity.ONE): Unit? {
+        assert(!client.isClientThread)
+
+        val currentCount = client.getInventory().count { it.id == id }
+        val freeInventorySlots = client.getInventory().count { it.id == -1 }
+
+        client.findFirstInBank(id).takeIf { it >= 0 }?.let { click(WITHDRAW(it, q)) } ?: return null
+        q.fixPresetHandleX() ?: return null
+
+        val countExpected = currentCount + min(q.value, freeInventorySlots)
+        return waitUntil(4000L, { println("timed out") }) { client.hasAtLeastInInventory(id, countExpected) }
+    }
+
+    /**
+     * Wrapper method around invoke that will wait until whatever we wanted to
+     * run in the client thread actually finishes.
+     */
+    fun ClientThread.run(timeout: Long = 4000L, f: () -> Unit) {
+        var done = false
+        invoke(Runnable {
+            f()
+            done = true
+        })
+        waitUntil(timeout) { done }
+    }
 
     fun bankWear(id: Int) = clickNinthBankDepositOptionOf(id)
     fun bankFill(id: Int) = clickNinthBankDepositOptionOf(id)
@@ -264,6 +353,22 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
     fun fill(id: Int) = clickInventoryFirstOptionOf(id)
     fun drop(id: Int) = client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(DROP(it, id)) }
     fun empty(id: Int) = clickInventorySecondOptionOf(id)
+    fun use(id: Int) = client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(USE(it, id)) }
+    fun useOnItem(id: Int) = client.findFirstInInventory(id).takeIf { it >= 0 }?.let { click(USE_ON_ITEM(it, id)) }
+
+    // Uses a on b. Does this in one click rather than two. Peep Ganom's one click.
+    // https://github.com/Ganom/ExternalPlugins/blob/master/OneClick/src/main/java/net/runelite/client/plugins/externals/oneclick/OneClickPlugin.java#L422-L474
+    fun useItemOnItem(a: Int, b: Int): Unit? {
+        val aIndex = client.findFirstInInventory(a).takeIf { it >= 0 } ?: return null
+        val bIndex = client.findFirstInInventory(b).takeIf { it >= 0 } ?: return null
+        events.once<MenuOptionClicked> {
+            client.selectedItemWidget = WidgetInfo.INVENTORY.id
+            client.selectedItemSlot = bIndex
+            client.setSelectedItemID(b)
+            overwriteWith(USE_ON_ITEM(aIndex, a))
+        }
+        return client.singleClickCenterScreenRandom()
+    }
 
     fun walkTo(p: LocalPoint) {
         events.subscribe<MenuOptionClicked>(1) {
@@ -289,6 +394,8 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         )
     }
 
+    val wait = { r: IntRange -> Thread.sleep((r.first..r.last.toLong()).random()) }
+
     /**
      * Waits for max amount of milliseconds until the predicate is true.
      * If it times out, runs the final function.
@@ -304,6 +411,20 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
                 final()
                 break
             }
+        }
+    }
+
+    /**
+     * Lol
+     * Returns when the player has been idle for more than the given window of time
+     */
+    fun waitUntilPlayerHasBeenIdleForMoreThan(window: IntRange, timeout: Long) {
+        waitUntil(timeout) {
+            if (client.localPlayer?.animation == IDLE) {
+                wait(window)
+                return@waitUntil client.localPlayer?.animation == IDLE
+            }
+            return@waitUntil false
         }
     }
 
@@ -360,6 +481,7 @@ else if (isInPestControl) {
 
     */
 }
+
 
 //14233 left
 //14235 right
