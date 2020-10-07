@@ -1,8 +1,12 @@
 rootProject.name = "Andrey's OpenOSRS Plugins"
 
-file("plugins").list().forEach {
-    println("Found plugin $it")
-    include(":$it")
+(gradle as ExtensionAware).apply {
+    extra["Author"] = "Andrey Kaipov"
+    extra["Repository"] = "https://github.com/andreykaipov/osrs-plugins"
+    extra["License"] = "2-Clause BSD License"
+
+    extra["oprsVersion"] = "3.4.5"
+    extra["pf4jVersion"] = "3.4.1"
 }
 
 pluginManagement.resolutionStrategy.eachPlugin {
@@ -11,20 +15,19 @@ pluginManagement.resolutionStrategy.eachPlugin {
     }
 }
 
-/**
- * To make plugin hotswapping work during development, each plugin's project
- * directory must contain a build file of the name $name.gradle.kts because
- * the client's ExternalPluginFilter uses it to discover valid plugin project
- * directories.
- *
- * See https://github.com/open-osrs/runelite/blob/e967884e48d9c0c78f9595105281f37c0fa793c9/runelite-client/src/main/java/net/runelite/client/plugins/ExternalPluginFileFilter.java#L24-L26.
- */
-rootProject.children.forEach {
-    it.apply {
-        projectDir = file("plugins/$name")
-        buildFileName = "$name.gradle.kts"
+listOf("common", "plugins").forEach {
+    include(":$it")
+    project(":$it").buildFileName = "$it.gradle.kts"
+}
 
-        require(projectDir.isDirectory) { "Project '${path} must have a $projectDir directory" }
-        require(buildFile.isFile) { "Project '${path} must have a $buildFile build script" }
+file("plugins").list()!!.filter { it != "plugins.gradle.kts" && it != ".build" }.forEach {
+    include(":plugins:$it")
+    project(":plugins:$it").apply {
+        buildFileName = "$it.gradle.kts"
+        projectDir = file("plugins/$name")
+        require(projectDir.isDirectory) { "Expected directory ${projectDir.relativeTo(rootProject.projectDir)} for plugin '$name'" }
+
+        val pluginFile = file("$projectDir/Plugin.kt")
+//        require(pluginFile.exists()) { "Expected file ${pluginFile.relativeTo(rootProject.projectDir)} for plugin '$name'" }
     }
 }
