@@ -17,13 +17,10 @@ allprojects {
 
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.kapt")
-    apply<MavenPublishPlugin>()
 
     repositories {
-        mavenLocal()
-        maven(url = "https://raw.githubusercontent.com/open-osrs/hosting/master")
-        maven(url = "https://repo.runelite.net")
         jcenter()
+        maven(url = "https://repo.runelite.net")
     }
 }
 
@@ -56,19 +53,6 @@ subprojects {
 
         implementation(group = "com.google.inject", name = "guice", version = "4.2.3", classifier = "no_aop")
         implementation(group = "io.reactivex.rxjava3", name = "rxjava", version = "3.0.6")
-    }
-
-    configure<PublishingExtension> {
-        repositories {
-            maven {
-                url = uri("$buildDir/repo")
-            }
-        }
-        publications {
-            register("mavenJava", MavenPublication::class) {
-                from(components["java"])
-            }
-        }
     }
 
     configure<JavaPluginConvention> {
