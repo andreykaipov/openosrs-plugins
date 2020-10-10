@@ -7,7 +7,14 @@ plugins {
     kotlin("kapt")
 }
 
+tasks.clean {
+    delete("$projectDir/build")
+}
+
 allprojects {
+    // redundant build dir at the end for plugin hotswapping to work during dev
+    buildDir = file("${rootProject.projectDir}/build/${project.name}/build")
+
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.kapt")
     apply<MavenPublishPlugin>()
@@ -21,7 +28,7 @@ allprojects {
 }
 
 subprojects {
-    group = "com.openosrs.externals"
+    group = "com.kaipov"
     kapt.includeCompileClasspath = false
     kotlin.sourceSets["main"].kotlin.srcDir("src")
 
@@ -103,8 +110,8 @@ subprojects {
 
             doLast {
                 copy {
-                    from("./build/libs/")
-                    into("../../release/")
+                    from("$buildDir/libs")
+                    into("${rootProject.projectDir}/release")
                 }
             }
 
@@ -118,9 +125,11 @@ subprojects {
                 // For hot-reloading during development
                 doLast {
                     copy {
-                        into("./build/deps/")
                         from(commonJar, kotlinStdlib)
+                        into("$buildDir/deps/")
                     }
+
+                    file("$buildDir/../${project.name}.gradle.kts").createNewFile()
                 }
             }
         }
