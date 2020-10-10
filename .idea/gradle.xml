@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/client" name="OpenOSRS">
+                <projects>
+                  <project path="$PROJECT_DIR$/client" />
+                  <project path="$PROJECT_DIR$/client/cache" />
+                  <project path="$PROJECT_DIR$/client/deobfuscator" />
+                  <project path="$PROJECT_DIR$/client/http-api" />
+                  <project path="$PROJECT_DIR$/client/injected-client" />
+                  <project path="$PROJECT_DIR$/client/injection-annotations" />
+                  <project path="$PROJECT_DIR$/client/runelite-api" />
+                  <project path="$PROJECT_DIR$/client/runelite-client" />
+                  <project path="$PROJECT_DIR$/client/runelite-mixins" />
+                  <project path="$PROJECT_DIR$/client/runelite-plugin-archetype" />
+                  <project path="$PROJECT_DIR$/client/runelite-script-assembler-plugin" />
+                  <project path="$PROJECT_DIR$/client/runescape-api" />
+                  <project path="$PROJECT_DIR$/client/runescape-client" />
+                  <project path="$PROJECT_DIR$/client/wiki-scraper" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="delegatedBuild" value="true" />
+        <option name="testRunner" value="GRADLE" />
+        <option name="distributionType" value="WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="$PROJECT_DIR$/../../../../../ProgramData/chocolatey/lib/gradle/tools/gradle-3.1" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/client" />
+            <option value="$PROJECT_DIR$/client/buildSrc" />
+            <option value="$PROJECT_DIR$/client/cache" />
+            <option value="$PROJECT_DIR$/client/deobfuscator" />
+            <option value="$PROJECT_DIR$/client/http-api" />
+            <option value="$PROJECT_DIR$/client/injected-client" />
+            <option value="$PROJECT_DIR$/client/injection-annotations" />
+            <option value="$PROJECT_DIR$/client/runelite-api" />
+            <option value="$PROJECT_DIR$/client/runelite-client" />
+            <option value="$PROJECT_DIR$/client/runelite-mixins" />
+            <option value="$PROJECT_DIR$/client/runelite-plugin-archetype" />
+            <option value="$PROJECT_DIR$/client/runelite-script-assembler-plugin" />
+            <option value="$PROJECT_DIR$/client/runescape-api" />
+            <option value="$PROJECT_DIR$/client/runescape-client" />
+            <option value="$PROJECT_DIR$/client/wiki-scraper" />
+            <option value="$PROJECT_DIR$/plugins/_common" />
+            <option value="$PROJECT_DIR$/plugins/afk-ge" />
+            <option value="$PROJECT_DIR$/plugins/bank-hotkeys" />
+            <option value="$PROJECT_DIR$/plugins/pest-control" />
+            <option value="$PROJECT_DIR$/plugins/wintertodt" />
+            <option value="$PROJECT_DIR$/plugins/zmi" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>
