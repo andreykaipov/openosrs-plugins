@@ -38,24 +38,17 @@ subprojects {
     dependencies {
         if (project.path != ":_common") implementation(project(":_common"))
 
+        implementation(group = "com.openosrs", name = "http-api")
+        implementation(group = "com.openosrs", name = "runelite-api")
+        implementation(group = "com.openosrs", name = "runelite-client")
+        implementation(group = "com.openosrs.rs", name = "runescape-api")
+        implementation(group = "com.openosrs.rs", name = "runescape-client")
+
         kapt(group = "org.pf4j", name = "pf4j", version = "3.4.1")
         implementation(group = "org.pf4j", name = "pf4j", version = "3.4.1")
 
-        implementation(group = "com.openosrs", name = "http-api", version = "3.4.4")
-        implementation(group = "com.openosrs", name = "runelite-api", version = "3.4.4")
-        implementation(group = "com.openosrs", name = "runelite-client", version = "3.4.4")
-        implementation(group = "com.openosrs.rs", name = "runescape-api", version = "3.4.4")
-        implementation(group = "com.openosrs.rs", name = "runescape-client", version = "3.4.4")
-
-        implementation(group = "org.apache.commons", name = "commons-text", version = "1.9")
-        implementation(group = "com.google.guava", name = "guava", version = "29.0-jre")
         implementation(group = "com.google.inject", name = "guice", version = "4.2.3", classifier = "no_aop")
-        implementation(group = "com.google.code.gson", name = "gson", version = "2.8.6")
-        implementation(group = "net.sf.jopt-simple", name = "jopt-simple", version = "5.0.4")
-        implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.3")
-        implementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.8.1")
         implementation(group = "io.reactivex.rxjava3", name = "rxjava", version = "3.0.6")
-        implementation(group = "org.pushing-pixels", name = "radiance-substance", version = "2.5.1")
     }
 
     configure<PublishingExtension> {
