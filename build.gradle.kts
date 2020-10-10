@@ -7,8 +7,9 @@ plugins {
     kotlin("kapt")
 }
 
-tasks.clean {
-    delete("$projectDir/build")
+tasks {
+    clean { delete("$projectDir/build") }
+    wrapper { gradleVersion = "6.6.1" }
 }
 
 allprojects {

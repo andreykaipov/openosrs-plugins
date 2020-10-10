@@ -1,4 +1,8 @@
 .idea/
-.gradle
 build
 dev
+
+.gradle
+gradle
+gradlew*
+gradle.properties
