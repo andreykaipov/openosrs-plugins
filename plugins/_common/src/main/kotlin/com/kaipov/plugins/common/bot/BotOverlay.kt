@@ -13,7 +13,6 @@ import net.runelite.client.ui.overlay.components.TitleComponent
 import net.runelite.client.ui.overlay.components.table.TableAlignment
 import net.runelite.client.ui.overlay.components.table.TableComponent
 import net.runelite.client.util.ColorUtil
-import org.apache.commons.lang3.time.DurationFormatUtils
 
 open class BotOverlay constructor(
     val client: Client,
@@ -28,14 +27,14 @@ open class BotOverlay constructor(
     override fun render(graphics: Graphics2D): Dimension {
         val table = TableComponent()
         table.setColumnAlignments(TableAlignment.LEFT, TableAlignment.RIGHT)
-        
-        table.addRow("Elapsed time:", DurationFormatUtils.formatDuration(plugin.timeRunning.toMillis(), "HH:mm:ss"))
-//        table.addRow("State:", plugin.state.toString())
+
+        val d = plugin.timeRunning
+        table.addRow("Elapsed time:", "${d.toHoursPart()}h ${d.toMinutesPart()}m ${d.toSecondsPart()}s")
         addExtraRows(table)
 
         if (!table.isEmpty) {
             panelComponent.backgroundColor = ColorUtil.fromHex("#1a1a1a")
-            panelComponent.preferredSize = Dimension(150, 200)
+            panelComponent.preferredSize = Dimension(165, 200)
             panelComponent.setBorder(Rectangle(5, 5, 5, 5))
             panelComponent.children.add(TitleComponent.builder().text(plugin.name).color(ColorUtil.fromHex("#00ee00")).build())
             panelComponent.children.add(table)
