@@ -18,7 +18,10 @@ fun AFKGE.tanLeather() {
     val input = config.tanLeatherInput()
 
     state(Start) {
+        checkRunes()?.let { return@state it }
+        checkInventory()?.let { return@state it }
         bankOpen()
+        check(input)?.let { return@state it }
         return@state Withdraw
     }
 
@@ -32,6 +35,7 @@ fun AFKGE.tanLeather() {
 
     state(Act) {
         repeat(5) {
+            checkRunes()?.let { return@state it }
             check(input)?.let { return@state it }
             click(SPELL_TAN_LEATHER)
             wait(1850..2250)
@@ -42,7 +46,6 @@ fun AFKGE.tanLeather() {
     state(Deposit) {
         bankOpen()
         bankDeposit(input.outputID, ALL)
-        bankDeposit(input.id, ALL)
         return@state Withdraw
     }
 }
@@ -56,7 +59,20 @@ fun AFKGE.check(input: TanLeatherInputs): State? {
         return Stop.with("We need astrals and natures in our inventory")
     }
 
-    if (state != Act && client.getInventory().count { it.id == -1 } != 25) {
+    return null
+}
+
+fun AFKGE.checkRunes(): State? {
+    if (!client.hasInInventory(ASTRAL_RUNE, 2) || !client.hasInInventory(NATURE_RUNE)) {
+        return Stop.with("We need astrals and natures in our inventory")
+    }
+
+    return null
+}
+
+
+fun AFKGE.checkInventory(): State? {
+    if (client.getInventory().count { it.id == -1 } != 25) {
         return Stop.with("We need exactly 25 free slots in our inventory")
     }
 
