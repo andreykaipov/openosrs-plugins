@@ -1,19 +1,15 @@
-extra["Author"] = "Andrey Kaipov"
-extra["Repository"] = "https://github.com/andreykaipov/osrs-plugins"
-extra["License"] = "2-Clause BSD License"
+val g = (gradle as ExtensionAware)
+
+tasks.wrapper { gradleVersion = "6.6.1" }
+tasks.clean { delete("$projectDir/build") }
 
 plugins {
     kotlin("jvm")
     kotlin("kapt")
 }
 
-tasks {
-    clean { delete("$projectDir/build") }
-    wrapper { gradleVersion = "6.6.1" }
-}
-
 allprojects {
-    // redundant build dir at the end for plugin hotswapping to work during dev
+    group = "com.kaipov"
     buildDir = file("${rootProject.projectDir}/build/${project.name}/build")
 
     apply(plugin = "org.jetbrains.kotlin.jvm")
@@ -26,23 +22,9 @@ allprojects {
 }
 
 subprojects {
-    group = "com.kaipov"
-    kapt.includeCompileClasspath = false
-    kotlin.sourceSets["main"].kotlin.srcDir("src")
-
-    // Read from source to avoid duplicating this configuration for both OpenOSRS and pf4j manifest metadata
-    extra["ID"] = project.path.substring(1)
-    extra["Description"] = try {
-        val f = File("${project.projectDir}/src/Plugin.kt")
-        val regexp = "description.*=.*\"([^\"]+?)\",".toRegex()
-        regexp.find(f.readText())?.groupValues?.get(1)!!
-    } catch (_: Exception) {
-        "n/a"
-    }
+    if (path == ":plugins") return@subprojects
 
     dependencies {
-        if (project.path != ":_common") implementation(project(":_common"))
-
         implementation(group = "com.openosrs", name = "http-api")
         implementation(group = "com.openosrs", name = "runelite-api")
         implementation(group = "com.openosrs", name = "runelite-client")
@@ -61,6 +43,9 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    kapt.includeCompileClasspath = false
+    kotlin.sourceSets["main"].kotlin.srcDir("src")
+
     tasks {
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             kotlinOptions.includeRuntime = true
@@ -71,52 +56,10 @@ subprojects {
         }
 
         withType<AbstractArchiveTask> {
+            outputs.upToDateWhen { false }
             isPreserveFileTimestamps = false
             isReproducibleFileOrder = true
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-            dirMode = 493
-            fileMode = 420
-        }
-
-        withType<Jar> {
-            outputs.upToDateWhen { false }
-
-            afterEvaluate {
-                manifest {
-                    attributes(mapOf(
-                        "Plugin-Id" to project.extra["ID"],
-                        "Plugin-Version" to project.version,
-                        "Plugin-Description" to project.extra["Description"],
-                        "Plugin-Provider" to rootProject.extra["Author"],
-                        "Plugin-License" to rootProject.extra["License"]
-                    ))
-                }
-            }
-
-            doLast {
-                copy {
-                    from("$buildDir/libs")
-                    into("${rootProject.projectDir}/release")
-                }
-            }
-
-            if (project.path != ":_common") {
-                val commonJar: File = project(":_common").tasks["jar"].outputs.files.singleFile
-                val kotlinStdlib: File = configurations.runtimeClasspath.get().filter { it.path.contains("kotlin-stdlib-${kotlin.coreLibrariesVersion}") }.singleFile
-
-                // For final release jar
-                from(zipTree(commonJar), zipTree(kotlinStdlib))
-
-                // For hot-reloading during development
-                doLast {
-                    copy {
-                        from(commonJar, kotlinStdlib)
-                        into("$buildDir/deps/")
-                    }
-
-                    file("$buildDir/../${project.name}.gradle.kts").createNewFile()
-                }
-            }
         }
     }
 }

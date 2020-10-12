@@ -8,12 +8,10 @@
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.12/48e4e5d60309ebd833bc528dcf77668eab3cd72c/lombok-1.18.12.jar" />
         </processorPath>
         <module name="OpenOSRS.cache.main" />
-        <module name="OpenOSRS.deobfuscator.main" />
+        <module name="OpenOSRS.runelite-client.test" />
         <module name="OpenOSRS.cache.test" />
         <module name="OpenOSRS.runelite-api.main" />
-        <module name="OpenOSRS.wiki-scraper.main" />
         <module name="OpenOSRS.http-api.main" />
-        <module name="OpenOSRS.runelite-client.test" />
       </profile>
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
