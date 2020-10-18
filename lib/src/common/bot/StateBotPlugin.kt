@@ -3,6 +3,7 @@ package com.kaipov.plugins.common.bot
 import com.kaipov.plugins.common.bot.DetailedStates.Stop
 import com.kaipov.plugins.common.bot.States.Start
 import com.kaipov.plugins.common.bot.States.Unknown
+import com.kaipov.plugins.common.bot.extras.waitUntil
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 import kotlin.reflect.KClass
@@ -11,7 +12,8 @@ import net.runelite.client.ui.overlay.OverlayPanel
 abstract class StateBotPlugin<C : BotConfig, O : OverlayPanel>(
     pluginClass: KClass<out StateBotPlugin<C, O>>,
     configClass: KClass<C>,
-) : BotPlugin<C, O>(pluginClass, configClass, everyOtherTick = 3) {
+    everyOtherTick: Int,
+) : BotPlugin<C, O>(pluginClass, configClass, everyOtherTick) {
 
     private val threads = mutableSetOf<Thread>()
 
@@ -41,6 +43,16 @@ abstract class StateBotPlugin<C : BotConfig, O : OverlayPanel>(
 
     override fun teardown() {
         threads.forEach { it.interrupt() }
+    }
+
+    fun waitUntil(max: Long = 4000L, predicate: () -> Boolean) {
+        waitUntil(
+            max,
+            final = {
+                state = Stop.with("Timed out waiting for a condition. Last state was $state.")
+            },
+            predicate
+        )
     }
 }
 

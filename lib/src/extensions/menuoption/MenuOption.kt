@@ -1,7 +1,6 @@
 package com.kaipov.plugins.extensions.menuoption
 
 import com.kaipov.plugins.extensions.menuoption.MenuOption.Companion.Quantity.*
-import java.lang.IllegalArgumentException
 import net.runelite.api.*
 import net.runelite.api.MenuOpcode.*
 import net.runelite.api.events.MenuOptionClicked
@@ -39,9 +38,9 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
         val DIALOG_PLAYER_CONTINUE  = MenuOption(0, WIDGET_TYPE_6, -1, WidgetInfo.DIALOG_PLAYER_CONTINUE.id)
 
         // Menu options from our extra widgets
-        val BANK_CLOSE              = MenuOption(1, CC_OP, 11, MyWidgetInfo.BANK_CONTAINER_BORDERS.id)
-        val NPC_CONTACT_DARK_MAGE   = MenuOption(1, CC_OP, -1, MyWidgetInfo.NPC_CONTACT_DARK_MAGE.id)
-        val TOGGLE_RUN              = MenuOption(1, CC_OP, -1, MyWidgetInfo.SETTINGS_TOGGLE_RUN.id)
+        val BANK_CLOSE            = MenuOption(1, CC_OP, 11, MyWidgetInfo.BANK_CONTAINER_BORDERS.id)
+        val NPC_CONTACT_DARK_MAGE = MenuOption(1, CC_OP, -1, MyWidgetInfo.NPC_CONTACT_DARK_MAGE.id)
+        val TOGGLE_RUN            = MenuOption(1, CC_OP, -1, MyWidgetInfo.SETTINGS_TOGGLE_RUN.id)
 
         /**
          * Inventory menu options need both the itemID and index (0-27) corresponding to the location of the item in
@@ -67,8 +66,8 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
             fun at(v: Int): Quantity {
                 value = when (this) {
                     PRESET -> v
-                    X -> v
-                    else -> throw IllegalArgumentException("Can only set PRESET and X Quantities")
+                    X      -> v
+                    else   -> throw IllegalArgumentException("Can only set PRESET and X Quantities")
                 }
                 return this
             }
@@ -122,10 +121,10 @@ class MenuOption(val id: Int, val opcode: MenuOpcode, val param0: Int, val param
          * when another NPC's talk option might their third option. Adjust your plugins accordingly.
          * May be affected by menu swapper options.
          */
-        fun NPC_FIRST_OPTION(index: Int)  = MenuOption(id = index, NPC_FIRST_OPTION, 0, 0)
-        fun NPC_SECOND_OPTION(index: Int) = MenuOption(id = index, NPC_SECOND_OPTION, 0, 0)
+        fun NPC_FIRST_OPTION(n: NPC)  = MenuOption(id = n.index, NPC_FIRST_OPTION, 0, 0)
+        fun NPC_SECOND_OPTION(n: NPC) = MenuOption(id = n.index, NPC_SECOND_OPTION, 0, 0)
 
-        fun GAME_OBJECT_FIRST_OPTION(o: GameObject) = MenuOption(o.id, GAME_OBJECT_FIRST_OPTION, o.sceneMinLocation.x, o.sceneMinLocation.y)
+        fun GAME_OBJECT_FIRST_OPTION(o: GameObject)  = MenuOption(o.id, GAME_OBJECT_FIRST_OPTION, o.sceneMinLocation.x, o.sceneMinLocation.y)
         fun GAME_OBJECT_SECOND_OPTION(o: TileObject) = MenuOption(o.id, GAME_OBJECT_SECOND_OPTION, o.localLocation.sceneX, o.localLocation.sceneY)
     }
 

@@ -3,7 +3,6 @@ package com.kaipov.plugins.craftleather
 import com.kaipov.plugins.AFKGE
 import com.kaipov.plugins.AfkStates.*
 import com.kaipov.plugins.common.bot.DetailedStates.Stop
-import com.kaipov.plugins.common.bot.State
 import com.kaipov.plugins.common.bot.States.Start
 import com.kaipov.plugins.common.bot.extras.wait
 import com.kaipov.plugins.common.bot.extras.waitUntilPlayerHasBeenIdleForMoreThan
@@ -19,14 +18,14 @@ fun AFKGE.craftLeather() {
     val output = config.craftLeatherOutput()
 
     state(Start) {
-        check(input)?.let { return@state it }
+        check(input)?.let { return@state Stop.with(it) }
         bankOpen()
         return@state Withdraw
     }
 
     state(Withdraw) {
         bankWithdraw(input.id, ALL)
-        check(input)?.let { return@state it }
+        check(input)?.let { return@state Stop.with(it) }
         bankClose()
         wait(600..800)
         return@state Act
@@ -47,17 +46,17 @@ fun AFKGE.craftLeather() {
     }
 }
 
-fun AFKGE.check(input: CraftLeatherInputs): State? {
+fun AFKGE.check(input: CraftLeatherInputs): String? {
     if (!client.hasInInventory(ItemID.NEEDLE)) {
-        return Stop.with("We need a needle in our inventory")
+        return "We need a needle in our inventory"
     }
 
     if (!client.hasInInventory(ItemID.THREAD)) {
-        return Stop.with("We need thread in our inventory")
+        return "We need thread in our inventory"
     }
 
     if (state == Withdraw && !client.hasAtLeastInInventory(input.id, 3)) {
-        return Stop.with("We need at least 3 pieces of $input in our inventory")
+        return "We need at least 3 pieces of $input in our inventory"
     }
 
     return null

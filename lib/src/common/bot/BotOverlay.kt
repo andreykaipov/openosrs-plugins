@@ -30,6 +30,11 @@ open class BotOverlay constructor(
 
         val d = plugin.timeRunning
         table.addRow("Elapsed time:", "${d.toHoursPart()}h ${d.toMinutesPart()}m ${d.toSecondsPart()}s")
+
+        (plugin as? StateBotPlugin)?.state?.let {
+            table.addRow("State:", it.toString())
+        }
+        
         addExtraRows(table)
 
         if (!table.isEmpty) {

@@ -143,7 +143,6 @@ fun Client.dimensions(): Dimension = if (isStretchedEnabled) {
 }
 
 fun Client.interacting(): Boolean {
-    assert(isClientThread)
     return localPlayer?.let { it.interacting != null }!!
 }
 

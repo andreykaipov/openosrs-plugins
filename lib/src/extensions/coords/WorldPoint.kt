@@ -1,7 +1,10 @@
 package com.kaipov.plugins.extensions.coords
 
 import java.awt.Dimension
+import kotlin.math.max
+import kotlin.math.min
 import net.runelite.api.Point
+import net.runelite.api.coords.LocalPoint
 import net.runelite.api.coords.WorldPoint
 
 /**
@@ -9,16 +12,59 @@ import net.runelite.api.coords.WorldPoint
  * Upperbound should be the NE corner of the rectangle.
  */
 
-object WorldPoints {
-    fun getRandomPointInZone2D(lowerBound: WorldPoint, upperBound: WorldPoint): WorldPoint {
-        val width = upperBound.x - lowerBound.x
-        val height = upperBound.y - lowerBound.y
-        return WorldPoint(
-            lowerBound.x + (0..width).random(),
-            lowerBound.y + (0..height).random(),
-            lowerBound.plane,
-        )
-    }
+/**
+ * The provided corners should be opposite from one another.
+ */
+fun getRandomPointInZone2D(corner1: WorldPoint, corner2: WorldPoint): WorldPoint {
+    assert(corner1.plane == corner2.plane)
+
+    val width = corner2.x - corner1.x
+    val height = corner2.y - corner1.y
+
+    val widthRange = if (width < 0) (width..0) else (0..width)
+    val heightRange = if (height < 0) (height..0) else (0..height)
+
+    return WorldPoint(
+        corner1.x + widthRange.random(),
+        corner1.y + heightRange.random(),
+        corner1.plane,
+    )
+}
+
+/**
+ * The provided corners should be opposite from one another.
+ */
+fun WorldPoint.isWithinZone2D(corner1: WorldPoint, corner2: WorldPoint): Boolean {
+    assert(plane == corner1.plane && plane == corner2.plane)
+
+    val xMin = min(corner1.x, corner2.x)
+    val yMin = min(corner1.y, corner2.y)
+    val xMax = max(corner1.x, corner2.x)
+    val yMax = max(corner1.y, corner2.y)
+
+    return x in xMin..xMax && y in yMin..yMax
+}
+
+fun getRandomPointInZone(corner1: LocalPoint, corner2: LocalPoint): LocalPoint {
+    val width = corner2.x - corner1.x
+    val height = corner2.y - corner1.y
+
+    val widthRange = if (width < 0) (width..0) else (0..width)
+    val heightRange = if (height < 0) (height..0) else (0..height)
+
+    return LocalPoint(
+        corner1.x + widthRange.random(),
+        corner1.y + heightRange.random(),
+    )
+}
+
+fun LocalPoint.isWithin(corner1: LocalPoint, corner2: LocalPoint): Boolean {
+    val xMin = min(corner1.x, corner2.x)
+    val yMin = min(corner1.y, corner2.y)
+    val xMax = max(corner1.x, corner2.x)
+    val yMax = max(corner1.y, corner2.y)
+
+    return x in xMin..xMax && y in yMin..yMax
 }
 
 /**

@@ -375,4 +375,10 @@ open class BotPlugin<C : BotConfig, O : OverlayPanel>(
         }
         client.singleClickCenterScreenRandom()
     }
+
+    val player get() = client.localPlayer
+
+    fun Player.inRegion() {
+        return
+    }
 }

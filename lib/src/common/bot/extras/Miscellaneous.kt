@@ -19,7 +19,7 @@ fun <C : BotConfig, O : OverlayPanel> BotPlugin<C, O>.sendGameMessage(message: S
     )
 }
 
-fun <C : BotConfig, O : OverlayPanel> BotPlugin<C, O>.wait(r: IntRange) {
+fun wait(r: IntRange) {
     Thread.sleep((r.first..r.last.toLong()).random())
 }
 
@@ -27,7 +27,7 @@ fun <C : BotConfig, O : OverlayPanel> BotPlugin<C, O>.wait(r: IntRange) {
  * Waits for max amount of milliseconds until the predicate is true.
  * If it times out, runs the final function.
  */
-fun <C : BotConfig, O : OverlayPanel> BotPlugin<C, O>.waitUntil(max: Long = 4000L, final: () -> Unit = {}, predicate: () -> Boolean) {
+fun waitUntil(max: Long = 4000L, final: () -> Unit = {}, predicate: () -> Boolean) {
     var timeSlept: Long = 0
     while (!predicate()) {
         val t = (500..1000L).random()
